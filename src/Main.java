@@ -1,9 +1,11 @@
+import java.time.LocalDate;
 import java.util.*;
 
 public class Main {
     Storage storage = new Storage();
-    public static void main(String[] args) {
-        System.out.println("Hello world!");
+    public void main(String[] args) {
+
+        //
     }
 }
 
@@ -19,6 +21,10 @@ class Storage{
                 Calendar tempCalendar = new GregorianCalendar();
                 String ID = requester + tempCalendar.get(Calendar.DATE);
                 onHold.put(ID, request);
+                if (amount < 0){
+                    rejectRequest(ID);
+                }
+                return;
             }
         }
     }
@@ -31,6 +37,10 @@ class Storage{
                     Calendar tempCalendar = new GregorianCalendar();
                     String ID = requester + tempCalendar.get(Calendar.DATE);
                     onHold.put(ID, request);
+                    if (amount < 0){
+                        rejectRequest(ID);
+                        return false;
+                    }
                     return true;
                 }
                 return false;
@@ -94,7 +104,11 @@ class Request{
         if (item == null){
             return;
         }
-        item.add(amount);
+        if (isPutIn) {
+            item.add(amount);
+        } else {
+            item.remove(amount);
+        }
         approval = true;
     }
 
@@ -117,6 +131,9 @@ class Item{
     }
     public void add(int amount){
         currentStock += amount;
+    }
+    public void remove(int amount){
+        currentStock -= amount;
     }
 
     public boolean checkCurrentStock(int amount){
