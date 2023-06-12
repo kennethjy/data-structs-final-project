@@ -2,7 +2,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 public class Main {
-    Storage storage = new Storage();
+    StorageLHM storage = new StorageLHM();
     public void main(String[] args) {
 
         //
@@ -101,41 +101,45 @@ public class Main {
     }
 }
 
-class Storage{
+class StorageLHM{
     LinkedHashMap<String, Request> onHold = new LinkedHashMap<>();
     LinkedHashMap<String, Request> archive = new LinkedHashMap<>();
     LinkedHashMap<String, Item> Stock = new LinkedHashMap<>();
 
     public void addRequest(String itemName, int amount, String requester, Date date){
-        for (String id: Stock.keySet()){
-            if (Stock.get(id).name.equals(itemName)){
-                Request request = new Request(id, true, amount, requester, date);
-                Calendar tempCalendar = new GregorianCalendar();
-                String ID = requester + tempCalendar.get(Calendar.DATE);
-                onHold.put(ID, request);
-                if (amount < 0){
-                    rejectRequest(ID);
-                }
-                return;
+        if (Stock.containsKey(itemName)){
+            Request request = new Request(itemName, true, amount, requester, date);
+            Calendar tempCalendar = new GregorianCalendar();
+            String ID = requester + tempCalendar.get(Calendar.DATE);
+            String tempID = ID;
+            int i = 1;
+            while (onHold.containsKey(ID)){
+                ID = tempID + "" + i;
+            }
+            onHold.put(ID, request);
+            if (amount < 0){
+                rejectRequest(ID);
             }
         }
     }
 
     public boolean removeRequest(String itemName, int amount, String requester, Date date){
-        for (String id: Stock.keySet()){
-            if (Stock.get(id).name.equals(itemName)){
-                if (Stock.get(id).checkCurrentStock(amount)) {
-                    Request request = new Request(id, false, amount, requester, date);
-                    Calendar tempCalendar = new GregorianCalendar();
-                    String ID = requester + tempCalendar.get(Calendar.DATE);
-                    onHold.put(ID, request);
-                    if (amount < 0){
-                        rejectRequest(ID);
-                        return false;
-                    }
-                    return true;
+        if (Stock.containsKey(itemName)){
+            if (Stock.get(itemName).checkCurrentStock(amount)) {
+                Request request = new Request(itemName, false, amount, requester, date);
+                Calendar tempCalendar = new GregorianCalendar();
+                String ID = requester + tempCalendar.get(Calendar.DATE);
+                String tempID = ID;
+                int i = 1;
+                while (onHold.containsKey(ID)){
+                    ID = tempID + "" + i;
                 }
-                return false;
+                onHold.put(ID, request);
+                if (amount < 0){
+                    rejectRequest(ID);
+                    return false;
+                }
+                return true;
             }
         }
         return false;
@@ -165,12 +169,10 @@ class Storage{
     }
 
     public boolean initializeItem(String name){
-        for (String id: Stock.keySet()){
-            if (Stock.get(id).name.equals(name)) {
-                return false;
-            }
+        if (Stock.containsKey(name)){
+            return false;
         }
-        Stock.put((Stock.values().size()) + "" + name.substring(0, 3), new Item(name));
+        Stock.put(name, new Item(name));
         return true;
     }
 }
