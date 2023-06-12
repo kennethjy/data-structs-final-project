@@ -7,6 +7,98 @@ public class Main {
 
         //
     }
+
+    public void requestItemEnter(){
+        Scanner in = new Scanner(System.in);
+        String[] keys = storage.Stock.keySet().toArray(new String[0]);
+        int i = 1;
+        for (String key: keys){
+            System.out.println(i + " " + storage.Stock.get(key));
+            i++;
+        }
+        String input;
+        System.out.println("Enter the index of the item to enter");
+        input = in.next();
+        int keyNum;
+        try {
+            System.out.println("Input entered is invalid");
+            keyNum = Integer.parseInt(input);
+        } catch (Exception e) {
+            return;
+        }
+        System.out.println("Enter the number of items to enter");
+        input = in.next();
+        int amt;
+        try {
+            amt = Integer.parseInt(input);
+        } catch (Exception e) {
+            System.out.println("Input entered is invalid");
+            return;
+        }
+        System.out.println("Enter your name");
+        String name = in.next();
+        storage.addRequest(keys[keyNum], amt, name, new Date());
+        System.out.println("Request Successfully added");
+    }
+    public void requestItemTake(){
+        Scanner in = new Scanner(System.in);
+        String[] keys = storage.Stock.keySet().toArray(new String[0]);
+        int i = 1;
+        for (String key: keys){
+            System.out.println(i + " " + storage.Stock.get(key));
+            i++;
+        }
+        String input;
+        System.out.println("Enter the index of the item to retrieve");
+        input = in.next();
+        int keyNum;
+        try {
+            keyNum = Integer.parseInt(input);
+        } catch (Exception e) {
+            System.out.println("Input entered is invalid");
+            return;
+        }
+        System.out.println("Enter the number of items to retrieve");
+        input = in.next();
+        int amt;
+        try {
+            amt = Integer.parseInt(input);
+        } catch (Exception e) {
+            System.out.println("Input entered is invalid");
+            return;
+        }
+        System.out.println("Enter your name");
+        String name = in.next();
+        if(storage.removeRequest(keys[keyNum], amt, name, new Date())) {
+            System.out.println("Request Successfully added");
+        } else {
+            System.out.println("Not enough items in stock");
+        }
+    }
+    public void reviewRequest(){
+        LinkedList<String> requests = storage.getRequests();
+        for (int i = 0; i <= requests.toArray().length; i++){
+            System.out.println((i+1) + " " + requests.get(i));
+        }
+        Scanner in = new Scanner(System.in);
+        System.out.println("Enter the index of the request to approve/reject");
+        String input = in.next();
+        int keyNum;
+        try {
+            keyNum = Integer.parseInt(input);
+        } catch (Exception e) {
+            System.out.println("Input entered is invalid");
+            return;
+        }
+        System.out.println("Would you like to [A]pprove or [R]eject this request?");
+        input = in.next().charAt(0) + "";
+        String id = requests.get(keyNum).split(" ")[0];
+        if (input.equalsIgnoreCase("A")){
+            storage.approveRequest(id);
+        } else {
+            storage.rejectRequest(id);
+        }
+    }
 }
 
 class Storage{
@@ -49,7 +141,7 @@ class Storage{
         return false;
     }
 
-    public LinkedList getRequests(){
+    public LinkedList<String> getRequests(){
         LinkedList<String> requests = new LinkedList<>();
         for (String id: onHold.keySet()){
             requests.add(id + " " + onHold.get(id).toString());
