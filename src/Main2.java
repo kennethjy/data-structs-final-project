@@ -18,16 +18,33 @@ public class Main2 {
             double prevTime = System.nanoTime();
             storage.initializeItem(String.valueOf(itemName));
             time = System.nanoTime() - prevTime;
-            System.out.println(time);
+            System.out.println(time + "ns");
         }
         Object[] keys = storage.Stock.keySet().toArray();
-        System.out.print("Enter amount of items: ");
+        System.out.print("Enter amount of requests: ");
         num = input.nextInt();
         for (int i = 0; i < num; i++) {
-            double prevTime = System.currentTimeMillis();
-            storage.addRequest(keys[random.nextInt(keys.length)].toString(), random.nextInt(5, 10), "Kenneth", new Date());
-            time = System.currentTimeMillis() - prevTime;
-            System.out.println(time + "ms");
+            double prevTime = System.nanoTime();
+            String item = keys[random.nextInt(keys.length)].toString();
+            int amt = random.nextInt(5, 10);
+            storage.addRequest(item, amt, "Kenneth", new Date());
+            time = System.nanoTime() - prevTime;
+            System.out.println(time + "ns");
+        }
+
+        LinkedList<String> requests = storage.getRequests();
+        System.out.print("Enter amount of requests to approve (max " + num + "): ");
+        int n = input.nextInt();
+        if (n > num){
+            num = random.nextInt(num);
+        } else {
+            num = n;
+        }
+        for(int i = 0; i < num; i++) {
+            double prevTime = System.nanoTime();
+            storage.approveRequest(requests.get(random.nextInt(requests.size())).split(" ")[0]);
+            time = System.nanoTime() - prevTime;
+            System.out.println(time + "ns");
         }
     }
 }

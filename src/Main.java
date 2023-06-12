@@ -1,3 +1,5 @@
+import com.sun.source.tree.Tree;
+
 import java.time.LocalDate;
 import java.util.*;
 
@@ -108,14 +110,15 @@ class StorageLHM{
 
     public void addRequest(String itemName, int amount, String requester, Date date){
         if (Stock.containsKey(itemName)){
-            Request request = new Request(itemName, true, amount, requester, date);
             Calendar tempCalendar = new GregorianCalendar();
             String ID = requester + tempCalendar.get(Calendar.DATE);
             String tempID = ID;
             int i = 1;
             while (onHold.containsKey(ID)){
                 ID = tempID + "" + i;
+                i++;
             }
+            Request request = new Request(ID, itemName, true, amount, requester, date);
             onHold.put(ID, request);
             if (amount < 0){
                 rejectRequest(ID);
@@ -126,7 +129,6 @@ class StorageLHM{
     public boolean removeRequest(String itemName, int amount, String requester, Date date){
         if (Stock.containsKey(itemName)){
             if (Stock.get(itemName).checkCurrentStock(amount)) {
-                Request request = new Request(itemName, false, amount, requester, date);
                 Calendar tempCalendar = new GregorianCalendar();
                 String ID = requester + tempCalendar.get(Calendar.DATE);
                 String tempID = ID;
@@ -134,6 +136,7 @@ class StorageLHM{
                 while (onHold.containsKey(ID)){
                     ID = tempID + "" + i;
                 }
+                Request request = new Request(ID, itemName, false, amount, requester, date);
                 onHold.put(ID, request);
                 if (amount < 0){
                     rejectRequest(ID);
@@ -163,7 +166,6 @@ class StorageLHM{
     }
     public void rejectRequest(String ID){
         if (onHold.containsKey(ID)) {
-            onHold.get(ID).setApproval(Stock);
             archive.put(ID, onHold.remove(ID));
         }
     }
@@ -177,7 +179,187 @@ class StorageLHM{
     }
 }
 
+class StorageLL{
+    LinkedList<Request> onHold = new LinkedList<>();
+    LinkedList<Request> archive = new LinkedList<>();
+    LinkedList<Item> Stock = new LinkedList<>();
+
+    public void addRequest(String itemName, int amount, String requester, Date date){
+        Item item = containsStockType(itemName);
+        if (item != null){
+            Calendar tempCalendar = new GregorianCalendar();
+            String ID = requester + tempCalendar.get(Calendar.DATE);
+            String tempID = ID;
+            int i = 1;
+            while (containsRequest(ID)){
+                ID = tempID + "" + i;
+                i++;
+            }
+            Request request = new Request(ID, itemName, true, amount, requester, date);
+            onHold.add(request);
+            if (amount < 0){
+                rejectRequest(ID);
+            }
+        }
+    }
+
+    public boolean removeRequest(String itemName, int amount, String requester, Date date){
+        Item item = containsStockType(itemName);
+        if (item != null){
+            if (item.checkCurrentStock(amount)) {
+                Calendar tempCalendar = new GregorianCalendar();
+                String ID = requester + tempCalendar.get(Calendar.DATE);
+                String tempID = ID;
+                int i = 1;
+                while (containsRequest(ID)){
+                    ID = tempID + "" + i;
+                    i++;
+                }
+                Request request = new Request(ID, itemName, false, amount, requester, date);
+                onHold.add(request);
+                if (amount < 0){
+                    rejectRequest(ID);
+                    return false;
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean containsRequest(String id){
+        for (Request request: onHold){
+            if(Objects.equals(request.requestID, id)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public Item containsStockType(String name){
+        for (Item item: Stock){
+            if(Objects.equals(item.name, name)){
+                return item;
+            }
+        }
+        return null;
+    }
+
+    public LinkedList<String> getRequests(){
+        LinkedList<String> requests = new LinkedList<>();
+        for (Request request: onHold){
+            String id = request.requestID;
+            requests.add(id + " " + request);
+        }
+        return requests;
+    }
+
+    public boolean approveRequest(String ID){
+        for (Request request: onHold) {
+            if (request.requestID.equals(ID)) {
+                request.setApproval(Stock);
+                onHold.remove(request);
+                archive.add(request);
+                return true;
+            }
+        }
+        return false;
+    }
+    public void rejectRequest(String ID){
+        for (Request request: onHold) {
+            if (request.requestID.equals(ID)) {
+                onHold.remove(request);
+                archive.add(request);
+            }
+        }
+    }
+
+    public boolean initializeItem(String name){
+        if (containsStockType(name) != null){
+            return false;
+        }
+        Stock.add(new Item(name));
+        return true;
+    }
+}
+
+class StorageTM{
+    TreeMap<String, Request> onHold = new TreeMap<>();
+    TreeMap<String, Request> archive = new TreeMap<>();
+    TreeMap<String, Item> Stock = new TreeMap<>();
+
+    public void addRequest(String itemName, int amount, String requester, Date date){
+        if (Stock.containsKey(itemName)){
+            Calendar tempCalendar = new GregorianCalendar();
+            String ID = requester + tempCalendar.get(Calendar.DATE);
+            String tempID = ID;
+            int i = 1;
+            while (onHold.containsKey(ID)){
+                ID = tempID + "" + i;
+                i++;
+            }
+            Request request = new Request(ID, itemName, true, amount, requester, date);
+            onHold.put(ID, request);
+            if (amount < 0){
+                rejectRequest(ID);
+            }
+        }
+    }
+
+    public boolean removeRequest(String itemName, int amount, String requester, Date date){
+        if (Stock.containsKey(itemName)){
+            if (Stock.get(itemName).checkCurrentStock(amount)) {
+                Calendar tempCalendar = new GregorianCalendar();
+                String ID = requester + tempCalendar.get(Calendar.DATE);
+                String tempID = ID;
+                int i = 1;
+                while (onHold.containsKey(ID)){
+                    ID = tempID + "" + i;
+                }
+                Request request = new Request(ID, itemName, false, amount, requester, date);
+                onHold.put(ID, request);
+                if (amount < 0){
+                    rejectRequest(ID);
+                    return false;
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public LinkedList<String> getRequests(){
+        LinkedList<String> requests = new LinkedList<>();
+        for (String id: onHold.keySet()){
+            requests.add(id + " " + onHold.get(id).toString());
+        }
+        return requests;
+    }
+
+    public boolean approveRequest(String ID){
+        if (!onHold.containsKey(ID)){
+            return false;
+        }
+        onHold.get(ID).setApproval(Stock);
+        archive.put(ID, onHold.remove(ID));
+        return true;
+    }
+    public void rejectRequest(String ID){
+        if (onHold.containsKey(ID)) {
+            archive.put(ID, onHold.remove(ID));
+        }
+    }
+
+    public boolean initializeItem(String name){
+        if (Stock.containsKey(name)){
+            return false;
+        }
+        Stock.put(name, new Item(name));
+        return true;
+    }
+}
 class Request{
+    String requestID;
     String itemID;
     boolean isPutIn;
     int amount;
@@ -185,12 +367,13 @@ class Request{
     Date date;
     private boolean approval = false;
 
-    Request(String itemID, boolean isPutIn, int amount, String requester, Date date){
+    Request(String requestID, String itemID, boolean isPutIn, int amount, String requester, Date date){
         this.itemID = itemID;
         this.isPutIn = isPutIn;
         this.amount = amount;
         this.requester = requester;
         this.date = date;
+        this.requestID = requestID;
     }
 
     public void setApproval(LinkedHashMap<String, Item> Stock){
@@ -204,6 +387,30 @@ class Request{
             item.remove(amount);
         }
         approval = true;
+    }
+    public void setApproval(TreeMap<String, Item> Stock){
+        Item item = Stock.get(itemID);
+        if (item == null){
+            return;
+        }
+        if (isPutIn) {
+            item.add(amount);
+        } else {
+            item.remove(amount);
+        }
+        approval = true;
+    }
+    public void setApproval(LinkedList<Item> Stock){
+        for (Item item: Stock){
+            if (Objects.equals(item.name, itemID)){
+                if (isPutIn) {
+                    item.add(amount);
+                } else {
+                    item.remove(amount);
+                }
+                approval = true;
+            }
+        }
     }
 
     public boolean getApproval(){
